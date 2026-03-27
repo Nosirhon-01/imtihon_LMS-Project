@@ -27,10 +27,7 @@ async function seedAdmin() {
           role: UserRole.ADMIN,
         },
       });
-      console.log('✓ Admin user updated with new password:');
-      console.log(`  ID: ${updated.id}`);
-      console.log(`  Phone: ${updated.phone}`);
-      console.log(`  Role: ${updated.role}`);
+    
       return;
     }
 
@@ -45,15 +42,7 @@ async function seedAdmin() {
       },
     });
 
-    console.log('✓ Admin user created successfully:');
-    console.log(`  ID: ${admin.id}`);
-    console.log(`  Phone: ${admin.phone}`);
-    console.log(`  Password: ${plainPassword} (hashed)`);
-    console.log(`  Role: ${admin.role}`);
-    console.log(`  Created: ${admin.createdAt}`);
-    console.log('\n✓ You can now login with:');
-    console.log(`  Phone: ${phone}`);
-    console.log(`  Password: ${plainPassword}`);
+
   } catch (error) {
     console.error('✗ Error seeding admin:', error.message);
     throw error;

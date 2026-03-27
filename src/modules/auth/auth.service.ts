@@ -14,7 +14,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, imagePath?: string) {
     const existingUser = await this.usersService.findByPhone(registerDto.phone);
     if (existingUser) {
       throw new ConflictException('User with this phone number already exists');
@@ -26,6 +26,7 @@ export class AuthService {
       data: {
         ...registerDto,
         password: hashedPassword,
+        ...(imagePath ? { image: imagePath } : {}),
       },
     });
 

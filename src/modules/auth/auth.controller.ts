@@ -1,13 +1,31 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UploadedFile,
+  UseInterceptors,
+  UseFilters,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
+import { RegisterDto, RegisterWithImageDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import type { Express } from 'express';
+import {
+  buildPublicFilePath,
+  imageUploadOptions,
+  IMAGE_PUBLIC_PATH,
+} from 'src/core/config/upload.config';
+import { MulterExceptionFilter } from 'src/core/filters/multer-exception.filter';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -18,7 +36,8 @@ export class AuthController {
     summary: 'Register a new user',
     description: 'Create a new user account with phone number and password',
   })
-  @ApiBody({ type: RegisterDto })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: RegisterWithImageDto })
   @ApiResponse({
     status: 201,
     description: 'User registered successfully',
@@ -36,9 +55,17 @@ export class AuthController {
     status: 400,
     description: 'Bad Request - Invalid input or phone already exists',
   })
+  @UseFilters(MulterExceptionFilter)
+  @UseInterceptors(FileInterceptor('image', imageUploadOptions))
   @Post('register')
-  register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  register(
+    @Body() registerDto: RegisterDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    const imagePath = image
+      ? buildPublicFilePath(IMAGE_PUBLIC_PATH, image.filename)
+      : undefined;
+    return this.authService.register(registerDto, imagePath);
   }
 
   @ApiOperation({

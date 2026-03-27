@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLessonViewDto } from './dto/create-lesson-view.dto';
 import { CreateLessonDto } from './dto/create-lesson.dto';
@@ -167,11 +168,24 @@ export class LessonsService {
     return lessonView;
   }
 
-  async create(mentorId: number, createLessonDto: CreateLessonDto) {
+  async create(
+    mentorId: number,
+    createLessonDto: CreateLessonDto,
+    videoPath?: string,
+  ) {
     const section = await this.prisma.sectionLesson.findUnique({
       where: { id: createLessonDto.sectionId },
       include: {
-        course: true,
+        course: {
+          include: {
+            mentor: {
+              select: {
+                id: true,
+                role: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -179,15 +193,15 @@ export class LessonsService {
       throw new NotFoundException('Section not found');
     }
 
-    if (section.course.mentorId !== mentorId) {
-      throw new ForbiddenException('You can only create lessons for your own courses');
+    if (!this.canAccessCourse(section.course, mentorId)) {
+      throw new ForbiddenException('You cannot access this course');
     }
 
     return this.prisma.lesson.create({
       data: {
         name: createLessonDto.name,
         about: createLessonDto.about,
-        video: createLessonDto.video,
+        video: videoPath,
         sectionId: createLessonDto.sectionId,
       },
     });
@@ -312,5 +326,12 @@ export class LessonsService {
       },
     });
     return !!purchased;
+  }
+
+  private canAccessCourse(
+    course: { mentorId: number; mentor?: { role: UserRole } | null },
+    userId: number,
+  ): boolean {
+    return course.mentor?.role === UserRole.ADMIN || course.mentorId === userId;
   }
 }

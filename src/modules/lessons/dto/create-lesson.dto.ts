@@ -18,14 +18,6 @@ export class CreateLessonDto {
   @IsOptional()
   about?: string;
 
-  @ApiPropertyOptional({
-    example: 'https://example.com/video.mp4',
-    description: 'Video URL',
-  })
-  @IsString()
-  @IsOptional()
-  video?: string;
-
   @ApiProperty({
     example: 1,
     description: 'Section ID',
@@ -33,4 +25,13 @@ export class CreateLessonDto {
   @IsNumber()
   @IsNotEmpty()
   sectionId: number;
+}
+
+export class CreateLessonWithVideoDto extends CreateLessonDto {
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Lesson video file (mp4, mkv, mov)',
+  })
+  video?: any;
 }

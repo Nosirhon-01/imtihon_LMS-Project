@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiProperty({
@@ -12,7 +12,7 @@ export class RegisterDto {
 
   @ApiProperty({
     example: 'password123',
-    description: 'User password (minimum 6 characters)',
+    description: 'User password minium 6 ta ',
   })
   @IsString()
   @MinLength(6)
@@ -25,4 +25,13 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   fullName: string;
+}
+
+export class RegisterWithImageDto extends RegisterDto {
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Profile image file (jpg, jpeg, png, webp)',
+  })
+  image?: any;
 }

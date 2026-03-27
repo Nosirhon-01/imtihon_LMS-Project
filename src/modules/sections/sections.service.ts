@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
@@ -10,14 +11,22 @@ export class SectionsService {
   async create(mentorId: number, createSectionDto: CreateSectionDto) {
     const course = await this.prisma.course.findUnique({
       where: { id: createSectionDto.courseId },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            role: true,
+          },
+        },
+      },
     });
 
     if (!course) {
       throw new NotFoundException('Course not found');
     }
 
-    if (course.mentorId !== mentorId) {
-      throw new ForbiddenException('You can only create sections for your own courses');
+    if (!this.canAccessCourse(course, mentorId)) {
+      throw new ForbiddenException('You cannot access this course');
     }
 
     return this.prisma.sectionLesson.create({
@@ -91,5 +100,12 @@ export class SectionsService {
     return this.prisma.sectionLesson.delete({
       where: { id },
     });
+  }
+
+  private canAccessCourse(
+    course: { mentorId: number; mentor?: { role: UserRole } | null },
+    userId: number,
+  ): boolean {
+    return course.mentor?.role === UserRole.ADMIN || course.mentorId === userId;
   }
 }

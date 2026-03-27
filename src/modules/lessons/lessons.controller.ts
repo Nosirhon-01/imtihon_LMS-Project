@@ -1,13 +1,28 @@
-import { Controller, Post, Get, Param, Body, Patch, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Patch,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  UploadedFile,
+  UseInterceptors,
+  UseFilters,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { LessonsService } from './lessons.service';
-import { CreateLessonDto } from './dto/create-lesson.dto';
+import { CreateLessonDto, CreateLessonWithVideoDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { AddLessonFileDto } from './dto/add-lesson-file.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
@@ -15,6 +30,14 @@ import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
 import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
+import {
+  buildPublicFilePath,
+  videoUploadOptions,
+  VIDEO_PUBLIC_PATH,
+} from 'src/core/config/upload.config';
+import { MulterExceptionFilter } from 'src/core/filters/multer-exception.filter';
 
 @ApiTags('Lessons')
 @Controller('lessons')
@@ -25,15 +48,23 @@ export class LessonsController {
   @ApiResponse({ status: 201, description: 'Lesson created' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Section not found' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateLessonWithVideoDto })
   @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MENTOR)
+  @UseFilters(MulterExceptionFilter)
+  @UseInterceptors(FileInterceptor('video', videoUploadOptions))
   @Post()
   create(
     @Body() createLessonDto: CreateLessonDto,
     @CurrentUser('id') mentorId: number,
+    @UploadedFile() video?: Express.Multer.File,
   ) {
-    return this.lessonsService.create(mentorId, createLessonDto);
+    const videoPath = video
+      ? buildPublicFilePath(VIDEO_PUBLIC_PATH, video.filename)
+      : undefined;
+    return this.lessonsService.create(mentorId, createLessonDto, videoPath);
   }
 
   @ApiOperation({

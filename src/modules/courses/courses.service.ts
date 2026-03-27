@@ -13,11 +13,15 @@ import { RateCourseDto } from './dto/rate-course.dto';
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(mentorId: number, createCourseDto: CreateCourseDto) {
+  async create(user: any, createCourseDto: CreateCourseDto) {
+    if (user.role !== 'MENTOR' && user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only mentor or admin can create course');
+    }
+
     return this.prisma.course.create({
       data: {
         ...createCourseDto,
-        mentorId,
+        mentorId: user.id,
       },
     });
   }
@@ -65,6 +69,7 @@ export class CoursesService {
           },
         },
       });
+
       if (!purchased) {
         throw new BadRequestException(
           'You must purchase this course to view full details',
@@ -108,6 +113,7 @@ export class CoursesService {
     }));
   }
 
+  
   async getCourseLessons(courseId: number, studentId?: number) {
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
@@ -124,6 +130,7 @@ export class CoursesService {
           },
         },
       });
+
       if (!purchased) {
         throw new BadRequestException(
           'You must purchase this course to view its lessons',
@@ -151,14 +158,17 @@ export class CoursesService {
     return {
       courseId,
       courseName: course.name,
-      sections: sections.map(section => ({
+      sections: sections.map((section) => ({
         sectionId: section.id,
         sectionName: section.name,
         lessonCount: section.lessons.length,
         lessons: section.lessons,
       })),
       totalSections: sections.length,
-      totalLessons: sections.reduce((acc, section) => acc + section.lessons.length, 0),
+      totalLessons: sections.reduce(
+        (acc, section) => acc + section.lessons.length,
+        0,
+      ),
     };
   }
 
@@ -209,13 +219,17 @@ export class CoursesService {
     });
   }
 
-  async update(id: number, mentorId: number, updateCourseDto: UpdateCourseDto) {
-    const course = await this.prisma.course.findFirst({
-      where: { id, mentorId },
+  async update(id: number, user: any, updateCourseDto: UpdateCourseDto) {
+    const course = await this.prisma.course.findUnique({
+      where: { id },
     });
 
-    if (!course) {
-      throw new NotFoundException('Course not found or you are not the owner');
+    if (!course) throw new NotFoundException('Course not found');
+
+    if (user.role !== 'ADMIN' && course.mentorId !== user.id) {
+      throw new ForbiddenException(
+        'You can update only your own course',
+      );
     }
 
     return this.prisma.course.update({
@@ -224,13 +238,17 @@ export class CoursesService {
     });
   }
 
-  async remove(id: number, mentorId: number) {
-    const course = await this.prisma.course.findFirst({
-      where: { id, mentorId },
+  async remove(id: number, user: any) {
+    const course = await this.prisma.course.findUnique({
+      where: { id },
     });
 
-    if (!course) {
-      throw new NotFoundException('Course not found or you are not the owner');
+    if (!course) throw new NotFoundException('Course not found');
+
+    if (user.role !== 'ADMIN' && course.mentorId !== user.id) {
+      throw new ForbiddenException(
+        'You can delete only your own course',
+      );
     }
 
     return this.prisma.course.delete({
