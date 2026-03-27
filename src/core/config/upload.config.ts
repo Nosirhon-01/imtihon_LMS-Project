@@ -9,12 +9,15 @@ const MB = 1024 * 1024;
 
 export const IMAGE_MAX_SIZE_BYTES = 5 * MB;
 export const VIDEO_MAX_SIZE_BYTES = 100 * MB;
+export const HOMEWORK_MAX_SIZE_BYTES = 20 * MB;
 
 export const IMAGE_PUBLIC_PATH = '/uploads/images';
 export const VIDEO_PUBLIC_PATH = '/uploads/videos';
+export const HOMEWORK_PUBLIC_PATH = '/uploads/homeworks';
 
 export const IMAGE_UPLOAD_DIR = join(process.cwd(), 'uploads', 'images');
 export const VIDEO_UPLOAD_DIR = join(process.cwd(), 'uploads', 'videos');
+export const HOMEWORK_UPLOAD_DIR = join(process.cwd(), 'uploads', 'homeworks');
 
 const ensureDir = (dir: string) => {
   if (!existsSync(dir)) {
@@ -78,6 +81,11 @@ export const videoUploadOptions: MulterOptions = {
   storage: createStorage(VIDEO_UPLOAD_DIR),
   fileFilter: createFileFilter(videoMimeTypes, videoExtensions, 'video'),
   limits: { fileSize: VIDEO_MAX_SIZE_BYTES },
+};
+
+export const homeworkUploadOptions: MulterOptions = {
+  storage: createStorage(HOMEWORK_UPLOAD_DIR),
+  limits: { fileSize: HOMEWORK_MAX_SIZE_BYTES },
 };
 
 export const buildPublicFilePath = (basePath: string, filename: string) => {

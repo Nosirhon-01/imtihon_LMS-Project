@@ -40,6 +40,7 @@ async function bootstrap() {
     .addTag('course-categories', 'Course Category Management - ADMIN only for create/update/delete')
     .addTag('Courses', 'Course management endpoints - Create, Read, Update, Delete')
     .addTag('Lessons', 'Lesson tracking endpoints - View lessons and track progress')
+    .addTag('Homework', 'Homework endpoints - Create assignments')
     .addTag('Questions', 'Question and answer endpoints - Ask and answer course questions')
     .addTag('Payments', 'Payment endpoints - Purchase courses')
     .build();

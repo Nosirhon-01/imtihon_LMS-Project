@@ -10,6 +10,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { LessonsModule } from './modules/lessons/lessons.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { SectionsModule } from './modules/sections/sections.module';
+import { HomeworkModule } from './modules/homework/homework.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SectionsModule } from './modules/sections/sections.module';
     LessonsModule,
     QuestionsModule,
     SectionsModule,
+    HomeworkModule,
   ],
   controllers: [AppController],
   providers: [AppService],
