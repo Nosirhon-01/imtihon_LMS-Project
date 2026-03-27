@@ -42,7 +42,7 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
-    }
+    } 
 
     return this.generateToken(user);
   }

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateQuestionDto {
@@ -17,12 +17,13 @@ export class CreateQuestionDto {
   @IsString()
   @IsNotEmpty()
   text: string;
+}
 
+export class CreateQuestionWithFileDto extends CreateQuestionDto {
   @ApiPropertyOptional({
-    example: 'https://example.com/screenshot.jpg',
-    description: 'Optional file attachment URL',
+    type: 'string',
+    format: 'binary',
+    description: 'Optional file attachment (pdf, image, etc.)',
   })
-  @IsString()
-  @IsOptional()
-  file?: string;
+  file?: any;
 }

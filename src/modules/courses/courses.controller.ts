@@ -1,14 +1,14 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete,
-  UseGuards, ParseIntPipe, Query
+  UseGuards, ParseIntPipe, Query, UploadedFiles, UseInterceptors, UseFilters
 } from '@nestjs/common';
 import {
   ApiTags, ApiOperation, ApiResponse, ApiParam,
-  ApiBody, ApiBearerAuth, ApiQuery,
+  ApiBody, ApiBearerAuth, ApiQuery, ApiConsumes,
 } from '@nestjs/swagger';
 
 import { CoursesService } from './courses.service';
-import { CreateCourseDto } from './dto/create-course.dto';
+import { CreateCourseDto, CreateCourseWithFilesDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { RateCourseDto } from './dto/rate-course.dto';
 
@@ -17,6 +17,15 @@ import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
 import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
+import {
+  buildPublicFilePath,
+  courseUploadOptions,
+  IMAGE_PUBLIC_PATH,
+    VIDEO_PUBLIC_PATH,
+} from 'src/core/config/upload.config';
+import { MulterExceptionFilter } from 'src/core/filters/multer-exception.filter';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -26,12 +35,45 @@ export class CoursesController {
   @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MENTOR)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateCourseWithFilesDto })
+  @UseFilters(MulterExceptionFilter)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'banner', maxCount: 1 },
+        { name: 'introVideo', maxCount: 1 },
+      ],
+      courseUploadOptions,
+    ),
+  )
   @Post()
   create(
     @Body() createCourseDto: CreateCourseDto,
     @CurrentUser() user: any,
+    @UploadedFiles()
+    files?: {
+      banner?: Express.Multer.File[];
+      introVideo?: Express.Multer.File[];
+    },
   ) {
-    return this.coursesService.create(user, createCourseDto);
+    const bannerFile = files?.banner?.[0];
+    const introVideoFile = files?.introVideo?.[0];
+
+    const bannerPath = bannerFile
+      ? buildPublicFilePath(IMAGE_PUBLIC_PATH, bannerFile.filename)
+      : undefined;
+
+    const introVideoPath = introVideoFile
+      ? buildPublicFilePath(VIDEO_PUBLIC_PATH, introVideoFile.filename)
+      : undefined;
+
+    return this.coursesService.create(
+      user,
+      createCourseDto,
+      bannerPath,
+      introVideoPath,
+    );
   }
 
   @Get()

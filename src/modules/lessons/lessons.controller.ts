@@ -64,7 +64,12 @@ export class LessonsController {
     const videoPath = video
       ? buildPublicFilePath(VIDEO_PUBLIC_PATH, video.filename)
       : undefined;
-    return this.lessonsService.create(mentorId, createLessonDto, videoPath);
+
+    return this.lessonsService.createLesson(
+      mentorId,
+      createLessonDto,
+      videoPath,
+    );
   }
 
   @ApiOperation({

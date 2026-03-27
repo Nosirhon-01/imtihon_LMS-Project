@@ -177,7 +177,6 @@ model SectionLesson {
   examAnswers     StudentExamQuestion[]
   examResults     ExamResult[]
   lastActivities  LastActivity[]
-  homeworks       Homework[]
 }
 
 model Lesson {
@@ -193,6 +192,7 @@ model Lesson {
   lessonViews    LessonView[]
   lessonFiles    LessonFile[]
   lastActivities LastActivity[]
+  homeworks      Homework[]
 }
 
 model LessonView {
@@ -208,7 +208,7 @@ model LessonView {
 
 model LessonFile {
   id        Int      @id @default(autoincrement())
-  file      String
+  fileUrl   String
   note      String?
   lessonId  Int
   createdAt DateTime @default(now())
@@ -218,13 +218,14 @@ model LessonFile {
 
 model Homework {
   id        Int      @id @default(autoincrement())
-  task      String
-  file      String?
-  sectionId Int
+  title     String
+  description String?
+  fileUrl   String?
+  lessonId  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  section     SectionLesson        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  lesson      Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   submissions HomeworkSubmission[]
 }
 

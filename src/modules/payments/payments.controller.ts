@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { PurchaseCourseDto } from './dto/purchase-course.dto';
+import { CoursePaymentDto } from './dto/course-payment.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
@@ -15,17 +15,20 @@ export class PaymentsController {
 
   @ApiOperation({ summary: 'Purchase course (Student only)' })
   @ApiResponse({ status: 201, description: 'Course purchased' })
-  @ApiResponse({ status: 400, description: 'Already purchased' })
+  @ApiResponse({
+    status: 400,
+    description: 'Already purchased or payment is insufficient',
+  })
   @ApiResponse({ status: 404, description: 'Course not found' })
   @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STUDENT)
   @Post('purchase-course')
   purchaseCourse(
-    @Body() purchaseCourseDto: PurchaseCourseDto,
+    @Body() coursePaymentDto: CoursePaymentDto,
     @CurrentUser('id') studentId: number,
   ) {
-    return this.paymentsService.purchaseCourse(studentId, purchaseCourseDto);
+    return this.paymentsService.purchaseCourse(studentId, coursePaymentDto);
   }
 
   @ApiOperation({ summary: 'Get my purchased courses' })

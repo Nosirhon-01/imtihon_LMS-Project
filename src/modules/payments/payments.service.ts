@@ -4,13 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PurchaseCourseDto } from './dto/purchase-course.dto';
+import { CoursePaymentDto } from './dto/course-payment.dto';
 
 @Injectable()
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  async purchaseCourse(studentId: number, dto: PurchaseCourseDto) {
+  async purchaseCourse(studentId: number, dto: CoursePaymentDto) {
     const { courseId, paidVia, amount } = dto;
 
     const course = await this.prisma.course.findUnique({
@@ -34,6 +34,10 @@ export class PaymentsService {
       throw new BadRequestException(
         'You have already purchased this course. Use GET /courses/my-courses to view it.',
       );
+    }
+
+    if (amount < course.price) {
+      throw new BadRequestException('Payment is insufficient');
     }
 
 

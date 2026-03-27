@@ -20,11 +20,11 @@ export class CreateHomeworkDto {
 
   @ApiProperty({
     example: 3,
-    description: 'Section ID this homework belongs to',
+    description: 'Lesson ID this homework belongs to',
   })
   @IsNumber()
   @IsNotEmpty()
-  sectionId: number;
+  lessonId: number;
 }
 
 export class CreateHomeworkWithFileDto extends CreateHomeworkDto {

@@ -17,21 +17,23 @@ export class LessonsService {
   async findOne(id: number, userId?: number) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        about: true,
+        video: true,
         section: {
-          include: {
-            course: true,
+          select: {
+            courseId: true,
           },
         },
-        lessonFiles: true,
-        lessonViews: true,
       },
     });
 
     if (!lesson) throw new NotFoundException('Lesson not found');
 
     if (userId) {
-      const courseId = lesson.section.course.id;
+      const courseId = lesson.section.courseId;
       const hasAccess = await this.checkStudentAccess(userId, courseId);
       if (!hasAccess) {
         throw new ForbiddenException(
@@ -40,7 +42,12 @@ export class LessonsService {
       }
     }
 
-    return lesson;
+    return {
+      id: lesson.id,
+      name: lesson.name,
+      about: lesson.about,
+      video: lesson.video,
+    };
   }
 
   async getLessonFiles(lessonId: number, userId?: number) {
@@ -71,7 +78,7 @@ export class LessonsService {
       where: { lessonId },
       select: {
         id: true,
-        file: true,
+        fileUrl: true,
         note: true,
         createdAt: true,
       },
@@ -168,7 +175,7 @@ export class LessonsService {
     return lessonView;
   }
 
-  async create(
+  async createLesson(
     mentorId: number,
     createLessonDto: CreateLessonDto,
     videoPath?: string,
@@ -201,10 +208,18 @@ export class LessonsService {
       data: {
         name: createLessonDto.name,
         about: createLessonDto.about,
-        video: videoPath,
+        video: videoPath ?? null,
         sectionId: createLessonDto.sectionId,
       },
     });
+  }
+
+  async create(
+    mentorId: number,
+    createLessonDto: CreateLessonDto,
+    videoPath?: string,
+  ) {
+    return this.createLesson(mentorId, createLessonDto, videoPath);
   }
 
   async update(mentorId: number, id: number, updateLessonDto: UpdateLessonDto) {
@@ -280,7 +295,7 @@ export class LessonsService {
 
     return this.prisma.lessonFile.create({
       data: {
-        file: addFileDto.file,
+        fileUrl: addFileDto.fileUrl,
         note: addFileDto.note,
         lessonId,
       },

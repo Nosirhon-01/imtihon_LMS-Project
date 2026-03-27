@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsNumber, Min } from 'class-validator';
 import { PaidVia } from '@prisma/client';
 
-export class PurchaseCourseDto {
+export class CoursePaymentDto {
   @IsNumber()
   @IsNotEmpty()
   courseId: number;

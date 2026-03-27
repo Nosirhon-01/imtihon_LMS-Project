@@ -1,4 +1,17 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Query, Delete, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  Query,
+  Delete,
+  ParseIntPipe,
+  UploadedFile,
+  UseInterceptors,
+  UseFilters,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,15 +20,24 @@ import {
   ApiQuery,
   ApiBearerAuth,
   ApiParam,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { QuestionsService } from './questions.service';
-import { CreateQuestionDto } from './dto/create-question.dto';
+import { CreateQuestionDto, CreateQuestionWithFileDto } from './dto/create-question.dto';
 import { AnswerQuestionDto } from './dto/answer-question.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
 import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
+import {
+  buildPublicFilePath,
+  QUESTION_PUBLIC_PATH,
+  questionUploadOptions,
+} from 'src/core/config/upload.config';
+import { MulterExceptionFilter } from 'src/core/filters/multer-exception.filter';
 
 @ApiTags('Questions')
 @Controller('questions')
@@ -26,7 +48,8 @@ export class QuestionsController {
     summary: 'Create a new question about a course (Students only)',
     description: 'Allows students to ask questions related to a course',
   })
-  @ApiBody({ type: CreateQuestionDto })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateQuestionWithFileDto })
   @ApiResponse({
     status: 201,
     description: 'Question created successfully',
@@ -38,12 +61,19 @@ export class QuestionsController {
   @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STUDENT)
+  @UseFilters(MulterExceptionFilter)
+  @UseInterceptors(FileInterceptor('file', questionUploadOptions))
   @Post()
   create(
     @Body() createQuestionDto: CreateQuestionDto,
     @CurrentUser('id') userId: number,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.questionsService.create(userId, createQuestionDto);
+    const filePath = file
+      ? buildPublicFilePath(QUESTION_PUBLIC_PATH, file.filename)
+      : undefined;
+
+    return this.questionsService.create(userId, createQuestionDto, filePath);
   }
 
   @ApiOperation({

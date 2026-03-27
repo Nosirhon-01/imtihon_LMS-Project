@@ -13,7 +13,12 @@ import { RateCourseDto } from './dto/rate-course.dto';
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(user: any, createCourseDto: CreateCourseDto) {
+  async create(
+    user: any,
+    createCourseDto: CreateCourseDto,
+    bannerPath?: string,
+    introVideoPath?: string,
+  ) {
     if (user.role !== 'MENTOR' && user.role !== 'ADMIN') {
       throw new ForbiddenException('Only mentor or admin can create course');
     }
@@ -21,6 +26,9 @@ export class CoursesService {
     return this.prisma.course.create({
       data: {
         ...createCourseDto,
+        banner: bannerPath ?? null,
+        introVideo: introVideoPath ?? null,
+        published: false,
         mentorId: user.id,
       },
     });
@@ -28,6 +36,7 @@ export class CoursesService {
 
   async findAll() {
     return this.prisma.course.findMany({
+      where: { published: true },
       include: {
         category: true,
         mentor: {
@@ -232,6 +241,10 @@ export class CoursesService {
       );
     }
 
+    if (updateCourseDto.published !== undefined && user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admin can publish courses');
+    }
+
     return this.prisma.course.update({
       where: { id },
       data: updateCourseDto,
@@ -259,6 +272,7 @@ export class CoursesService {
   async search(query: string) {
     return this.prisma.course.findMany({
       where: {
+        published: true,
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { about: { contains: query, mode: 'insensitive' } },
@@ -280,24 +294,26 @@ export class CoursesService {
   async findByCategory(categoryId: number) {
     const category = await this.prisma.courseCategory.findUnique({
       where: { id: categoryId },
+      select: {
+        id: true,
+        name: true,
+        courses: {
+          where: { published: true },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            banner: true,
+            level: true,
+          },
+        },
+      },
     });
 
     if (!category) {
       throw new NotFoundException('Category not found');
     }
 
-    return this.prisma.course.findMany({
-      where: { categoryId },
-      include: {
-        category: true,
-        mentor: {
-          select: {
-            id: true,
-            fullName: true,
-            image: true,
-          },
-        },
-      },
-    });
+    return category;
   }
 }

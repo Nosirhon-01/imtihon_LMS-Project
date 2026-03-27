@@ -131,7 +131,7 @@ async function main() {
 
   await prisma.lessonFile.create({
     data: {
-      file: 'https://example.com/lesson1-slides.pdf',
+      fileUrl: 'https://example.com/lesson1-slides.pdf',
       note: 'Slides for introduction',
       lessonId: lesson1.id,
     },
@@ -139,7 +139,7 @@ async function main() {
 
   await prisma.lessonFile.create({
     data: {
-      file: 'https://example.com/lesson1-code.zip',
+      fileUrl: 'https://example.com/lesson1-code.zip',
       note: 'Code examples',
       lessonId: lesson1.id,
     },

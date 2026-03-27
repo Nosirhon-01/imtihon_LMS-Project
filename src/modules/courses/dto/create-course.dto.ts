@@ -26,22 +26,6 @@ export class CreateCourseDto {
   @IsNumber()
   price: number;
 
-  @ApiPropertyOptional({
-    example: 'https://example.com/banner.jpg',
-    description: 'Course banner image URL',
-  })
-  @IsString()
-  @IsOptional()
-  banner?: string;
-
-  @ApiPropertyOptional({
-    example: 'https://example.com/intro.mp4',
-    description: 'Course intro video URL',
-  })
-  @IsString()
-  @IsOptional()
-  introVideo?: string;
-
   @ApiProperty({
     enum: CourseLevel,
     example: CourseLevel.INTERMEDIATE,
@@ -56,4 +40,20 @@ export class CreateCourseDto {
   })
   @IsNumber()
   categoryId: number;
+}
+
+export class CreateCourseWithFilesDto extends CreateCourseDto {
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Optional course banner image (jpg, png, webp)',
+  })
+  banner?: any;
+
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Optional intro video (mp4, mkv, mov)',
+  })
+  introVideo?: any;
 }

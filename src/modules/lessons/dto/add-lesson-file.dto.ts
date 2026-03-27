@@ -8,7 +8,7 @@ export class AddLessonFileDto {
   })
   @IsString()
   @IsNotEmpty()
-  file: string;
+  fileUrl: string;
 
   @ApiProperty({
     example: 'Lecture notes',

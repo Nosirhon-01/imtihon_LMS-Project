@@ -76,7 +76,7 @@ export class HomeworkController {
     type: HomeworkResponseDto,
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 404, description: 'Section not found' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateHomeworkWithFileDto })
   @ApiBearerAuth('JWT')

@@ -7,7 +7,11 @@ import { AnswerQuestionDto } from './dto/answer-question.dto';
 export class QuestionsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: number, createQuestionDto: CreateQuestionDto) {
+  async create(
+    userId: number,
+    createQuestionDto: CreateQuestionDto,
+    filePath?: string,
+  ) {
 
     const course = await this.prisma.course.findUnique({
       where: { id: createQuestionDto.courseId },
@@ -20,7 +24,7 @@ export class QuestionsService {
         userId,
         courseId: createQuestionDto.courseId,
         text: createQuestionDto.text,
-        file: createQuestionDto.file || null,
+        file: filePath ?? null,
         read: false,
       },
       include: {

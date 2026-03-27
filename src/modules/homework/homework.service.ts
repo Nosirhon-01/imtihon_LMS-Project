@@ -10,8 +10,12 @@ export class HomeworkService {
   async getHomeworkByLesson(lessonId: number, studentId: number) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },
-      include: {
-        section: true,
+      select: {
+        section: {
+          select: {
+            courseId: true,
+          },
+        },
       },
     });
 
@@ -33,10 +37,11 @@ export class HomeworkService {
     }
 
     const homework = await this.prisma.homework.findFirst({
-      where: { sectionId: lesson.sectionId },
+      where: { lessonId },
       orderBy: { createdAt: 'desc' },
       select: {
-        task: true,
+        title: true,
+        description: true,
       },
     });
 
@@ -46,8 +51,8 @@ export class HomeworkService {
 
     return {
       lessonId,
-      title: homework.task,
-      description: null,
+      title: homework.title,
+      description: homework.description ?? null,
     };
   }
 
@@ -56,15 +61,19 @@ export class HomeworkService {
     createHomeworkDto: CreateHomeworkDto,
     fileUrl?: string,
   ) {
-    const section = await this.prisma.sectionLesson.findUnique({
-      where: { id: createHomeworkDto.sectionId },
-      include: {
-        course: {
-          include: {
-            mentor: {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: createHomeworkDto.lessonId },
+      select: {
+        section: {
+          select: {
+            course: {
               select: {
-                id: true,
-                role: true,
+                mentorId: true,
+                mentor: {
+                  select: {
+                    role: true,
+                  },
+                },
               },
             },
           },
@@ -72,32 +81,34 @@ export class HomeworkService {
       },
     });
 
-    if (!section) {
-      throw new NotFoundException('Section not found');
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
     }
 
-    if (!this.canAccessCourse(section.course, mentorId)) {
+    if (!this.canAccessCourse(lesson.section.course, mentorId)) {
       throw new ForbiddenException('You cannot access this course');
     }
 
     const homework = await this.prisma.homework.create({
       data: {
-        task: createHomeworkDto.title,
-        file: fileUrl,
-        sectionId: createHomeworkDto.sectionId,
+        title: createHomeworkDto.title,
+        description: createHomeworkDto.description ?? null,
+        fileUrl,
+        lessonId: createHomeworkDto.lessonId,
       },
       select: {
         id: true,
-        task: true,
-        file: true,
+        title: true,
+        description: true,
+        fileUrl: true,
       },
     });
 
     return {
       id: homework.id,
-      title: homework.task,
-      description: createHomeworkDto.description ?? null,
-      fileUrl: homework.file ?? null,
+      title: homework.title,
+      description: homework.description ?? null,
+      fileUrl: homework.fileUrl ?? null,
     };
   }
 
